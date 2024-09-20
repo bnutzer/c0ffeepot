@@ -1,19 +1,22 @@
 package bnutzer.c0ffeepot;
 
-import lombok.SneakyThrows;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.net.MalformedURLException;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.function.Consumer;
+import java.util.function.Function;
 
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.http.ClassicHttpRequest;
+import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.HttpResponse;
+import org.apache.hc.core5.http.ParseException;
+import org.apache.hc.core5.http.io.HttpClientResponseHandler;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.GenericContainer;
@@ -26,12 +29,11 @@ class C0ffeepotTest {
     @Container
     private static final GenericContainer<?> c0ffeepot = new GenericContainer<>("bnutzer/c0ffeepot").withExposedPorts(80);
 
-    private static URI buildUri(String query) {
+    private static URI buildUri(String query) throws URISyntaxException {
         return buildUri(query, "/");
     }
 
-    @SneakyThrows
-    private static URI buildUri(String query, String path) {
+    private static URI buildUri(String query, String path) throws URISyntaxException {
         return new URI("http",
                 null,
                 c0ffeepot.getHost(),
@@ -41,85 +43,74 @@ class C0ffeepotTest {
                 "");
     }
 
-    @SneakyThrows
-    private void withResponseAssert(URI uri, Consumer<CloseableHttpResponse> responseConsumer) {
+    private static <T> T executeRequest(URI uri,
+                                 Function<URI, ClassicHttpRequest> requestBuilder,
+                                 HttpClientResponseHandler<? extends T> responseHandler) throws IOException {
 
-        final var url = uri.toURL().toString();
-
-        HttpGet httpGet = new HttpGet(url);
         try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
-            try (CloseableHttpResponse response = httpclient.execute(httpGet)) {
-
-                responseConsumer.accept(response);
-            }
+            return httpclient.execute(requestBuilder.apply(uri), responseHandler);
         }
     }
 
-    @SneakyThrows
-    private void withResponseContentAssert(URI uri, Consumer<String> responseContentConsumer) {
+    private static String getResponseBody(ClassicHttpResponse response) throws IOException, ParseException {
 
-        withResponseAssert(uri, response ->
-        {
-            HttpEntity entity = response.getEntity();
-            try {
-                var resultContent = EntityUtils.toString(entity);
-                responseContentConsumer.accept(resultContent);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        });
+        HttpEntity entity = response.getEntity();
+        return EntityUtils.toString(entity);
+}
+
+    @Test
+    void testDefaultRequest() throws IOException, URISyntaxException {
+
+        var uri = buildUri("");
+        var code = executeRequest(uri, HttpGet::new, HttpResponse::getCode);
+        assertThat(code).isEqualTo(200);
     }
 
     @Test
-    void testDefaultRequest() {
+    void test404IsReturned() throws IOException, URISyntaxException {
 
-        withResponseAssert(buildUri(""), response -> assertThat(response.getCode()).isEqualTo(200));
+        var uri = buildUri("status=404");
+        var code = executeRequest(uri, HttpGet::new, HttpResponse::getCode);
+        assertThat(code).isEqualTo(404);
     }
 
     @Test
-    void test404IsReturned() {
+    void test503IsReturned() throws IOException, URISyntaxException {
 
-        withResponseAssert(buildUri("status=404"), response -> assertThat(response.getCode()).isEqualTo(404));
+        var uri = buildUri("status=503");
+        var code = executeRequest(uri, HttpGet::new, HttpResponse::getCode);
+        assertThat(code).isEqualTo(503);
     }
 
     @Test
-    void test503IsReturned() {
+    void testLocationIsReturned() throws IOException, URISyntaxException {
 
-        withResponseAssert(buildUri("status=503"), response -> assertThat(response.getCode()).isEqualTo(503));
+        var uri = buildUri("location=http://example.com");
+        var locationHeader = executeRequest(uri, HttpGet::new, response -> response.getFirstHeader("Location").getValue());
+        assertThat(locationHeader).isEqualTo("http://example.com");
     }
 
     @Test
-    void testLocationIsReturned() {
+    void testBodyIsReturned() throws URISyntaxException, IOException {
 
-        withResponseAssert(buildUri("location=http://example.com"),
-                response -> assertThat(response.getFirstHeader("Location").getValue()).isEqualTo("http://example.com"));
+        var uri = buildUri("body=hi+there");
+        var body = executeRequest(uri, HttpGet::new, C0ffeepotTest::getResponseBody);
+        assertThat(body).isEqualToIgnoringNewLines("hi there");
     }
 
     @Test
-    void testBodyIsReturned() {
+    void testNonRootPath() throws IOException, URISyntaxException {
 
-        withResponseContentAssert(buildUri("body=hi+there"),
-                resultContent -> assertThat(resultContent).isEqualToIgnoringNewLines("hi there"));
+        var uri = buildUri("", "/foo/bar");
+        var code = executeRequest(uri, HttpGet::new, HttpResponse::getCode);
+        assertThat(code).isEqualTo(200);
     }
 
     @Test
-    void testNonRootPath() {
+    void testRespondsToPost() throws URISyntaxException, IOException {
 
-        withResponseAssert(buildUri("", "/foo/bar"), response -> assertThat(response.getCode()).isEqualTo(200));
-    }
-
-    @Test
-    @SneakyThrows
-    void testRespondsToPost() {
-
-        final var url = buildUri("").toURL().toString();
-
-        HttpPost httpPost = new HttpPost(url);
-        try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
-            try (CloseableHttpResponse response = httpclient.execute(httpPost)) {
-
-                assertThat(response.getCode()).isEqualTo(200);
-            }
-        }
+        var uri = buildUri("");
+        var code = executeRequest(uri, HttpPost::new, HttpResponse::getCode);
+        assertThat(code).isEqualTo(200);
     }
 }
