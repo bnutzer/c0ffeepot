@@ -13,6 +13,8 @@ tasks.test {
 
 dependencies {
 
+    testImplementation("org.springframework:spring-web:6.1.+")
+
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.+")
     testImplementation("org.junit.jupiter:junit-jupiter-engine:5.+")
 

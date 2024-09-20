@@ -24,7 +24,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 @Testcontainers
-class C0ffeepotTest {
+class C0ffeepotApacheHttpClientTest {
 
     @Container
     private static final GenericContainer<?> c0ffeepot = new GenericContainer<>("bnutzer/c0ffeepot").withExposedPorts(80);
@@ -94,7 +94,7 @@ class C0ffeepotTest {
     void testBodyIsReturned() throws URISyntaxException, IOException {
 
         var uri = buildUri("body=hi+there");
-        var body = executeRequest(uri, HttpGet::new, C0ffeepotTest::getResponseBody);
+        var body = executeRequest(uri, HttpGet::new, C0ffeepotApacheHttpClientTest::getResponseBody);
         assertThat(body).isEqualToIgnoringNewLines("hi there");
     }
 
