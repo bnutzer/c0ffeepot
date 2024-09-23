@@ -1,6 +1,7 @@
 
 plugins {
 	java
+	checkstyle
 }
 
 repositories {
@@ -9,6 +10,13 @@ repositories {
 
 tasks.test {
     useJUnitPlatform()
+}
+
+checkstyle {
+    isIgnoreFailures = false
+    isShowViolations = true
+    maxErrors = 0
+    maxWarnings = 0
 }
 
 dependencies {

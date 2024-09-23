@@ -8,9 +8,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.client.RestClient;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -20,13 +18,6 @@ abstract class C0ffeepotSpringResponseEntityTest {
 
     @Container
     private static final GenericContainer<?> C0FFEE_POT_CONTAINER = new GenericContainer<>("bnutzer/c0ffeepot").withExposedPorts(80);
-
-    private static RestClient buildRestClient() {
-        return RestClient.builder()
-                .defaultStatusHandler(HttpStatusCode::is4xxClientError, (request, response) -> {})
-                .defaultStatusHandler(HttpStatusCode::is5xxServerError, (request, response) -> {})
-                .build();
-    }
 
     private static URI buildUri(String query) throws URISyntaxException {
         return buildUri(query, "/");

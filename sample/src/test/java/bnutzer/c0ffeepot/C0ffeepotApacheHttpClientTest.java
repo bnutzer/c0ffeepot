@@ -27,7 +27,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 class C0ffeepotApacheHttpClientTest {
 
     @Container
-    private static final GenericContainer<?> c0ffeepot = new GenericContainer<>("bnutzer/c0ffeepot").withExposedPorts(80);
+    private static final GenericContainer<?> C0FFEEPOT = new GenericContainer<>("bnutzer/c0ffeepot").withExposedPorts(80);
 
     private static URI buildUri(String query) throws URISyntaxException {
         return buildUri(query, "/");
@@ -36,8 +36,8 @@ class C0ffeepotApacheHttpClientTest {
     private static URI buildUri(String query, String path) throws URISyntaxException {
         return new URI("http",
                 null,
-                c0ffeepot.getHost(),
-                c0ffeepot.getMappedPort(80),
+                C0FFEEPOT.getHost(),
+                C0FFEEPOT.getMappedPort(80),
                 path,
                 query,
                 "");
@@ -56,7 +56,7 @@ class C0ffeepotApacheHttpClientTest {
 
         HttpEntity entity = response.getEntity();
         return EntityUtils.toString(entity);
-}
+    }
 
     @Test
     void testDefaultRequest() throws IOException, URISyntaxException {
