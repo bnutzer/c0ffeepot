@@ -25,12 +25,42 @@ docker rm c0ffeepot
 Usage
 =====
 
-c0ffeepot understands these variables as query parameters:
+c0ffeepot has three ways of injecting response attributes:
+* Query parameters
+* Path segments
+* Preloaded data
+
+These are the available attributes:
 * `status` The http status to respond with (e.g., 200, 201, 503, ...)
 * `location` A "Location" header in the response. Empty per default.
 * `contenttype` A "Content-Type" header in the response. "application/json" per
   default.
 * `body` The response body. A sample hello-world json response per default.
+
+Query parameters and path segments can be mixed.
+
+Samples:
+```shell
+$ curl -D - http://localhost:8080/status/200?body=hi+there
+$ curl -D - http://localhost:8080/status/302?location=http://example.com
+
+```
+
+Preloading
+==========
+
+For testing of transitive requests, it can be helpful to first set up c0ffeepot to respond with certain
+properties, and then perform the transitive request. To do so, "preload" c0ffeepot with the properties
+it should return in the next call:
+
+```shell
+$ curl -D - http://localhost:8080/preload/status/200?body=hi+there
+$ curl -D - http://localhost:8080/api/whatever
+
+```
+
+After preloading, the preloaded data will be returned in the next request, after which the data will
+be discarded.
 
 Build your own image
 ====================

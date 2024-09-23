@@ -120,4 +120,18 @@ abstract class C0ffeepotSpringResponseEntityTest {
         assertThat(responseEntity.getHeaders().getLocation()).hasToString("foobar");
         assertThat(responseEntity.getBody()).isEqualToIgnoringNewLines("hi there");
     }
+
+    @Test
+    void testCanPreload() throws URISyntaxException {
+
+        var uri = buildUri("", "/preload/status/500/location/foobar/body/hi+there");
+        var responseEntity = executeGet(uri);
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
+
+        uri = buildUri("", "");
+        responseEntity = executeGet(uri);
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(responseEntity.getHeaders().getLocation()).hasToString("foobar");
+        assertThat(responseEntity.getBody()).isEqualToIgnoringNewLines("hi there");
+    }
 }

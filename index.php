@@ -1,5 +1,7 @@
 <?php
 
+$preloadFilename = sys_get_temp_dir() . DIRECTORY_SEPARATOR . "c0ffeepot.json";
+
 $originalRequestPath = $_GET['originalRequestPath'] ?? '(unknown)';
 $originalRequestPathSegments = explode("/", $originalRequestPath);
 
@@ -22,21 +24,38 @@ $vars = array(
     'location' => resolveVariable('location', ''),
 );
 
-if ($vars['location']) {
-    header('Location: ' . $vars['location']);
-}
+if ($originalRequestPathSegments[0] === 'preload') {
 
-if ($vars['contenttype'])  {
-    header('Content-Type: ' . $vars['contenttype']);
-}
+    $file = fopen($preloadFilename, "w");
+    fwrite($file, json_encode($vars));
+    fclose($file);
 
-header('X-Original-Request-Path: ' . $originalRequestPath);
-header('X-Request-Method: ' . $_SERVER['REQUEST_METHOD']);
+    http_response_code(202);
 
-http_response_code($vars['status']);
+} else {
 
-if ($vars['body']) {
-    print($vars['body'] . "\n");
+    if (file_exists($preloadFilename)) {
+        $filecontent = file_get_contents($preloadFilename);
+        $vars = json_decode($filecontent, true);
+        unlink($preloadFilename);
+    }
+
+    if ($vars['location']) {
+        header('Location: ' . $vars['location']);
+    }
+
+    if ($vars['contenttype'])  {
+        header('Content-Type: ' . $vars['contenttype']);
+    }
+
+    header('X-Original-Request-Path: ' . $originalRequestPath);
+    header('X-Request-Method: ' . $_SERVER['REQUEST_METHOD']);
+
+    http_response_code($vars['status']);
+
+    if ($vars['body']) {
+        print($vars['body'] . "\n");
+    }
 }
 
 ?>
