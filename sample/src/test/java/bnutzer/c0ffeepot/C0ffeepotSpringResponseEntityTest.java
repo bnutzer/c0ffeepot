@@ -100,4 +100,24 @@ abstract class C0ffeepotSpringResponseEntityTest {
         var responseEntity = executePost(uri);
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
+
+    @Test
+    void testCanUsePathSegmentAttributes() throws URISyntaxException {
+
+        var uri = buildUri("", "/status/500/location/foobar/body/hi+there");
+        var responseEntity = executeGet(uri);
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(responseEntity.getHeaders().getLocation()).hasToString("foobar");
+        assertThat(responseEntity.getBody()).isEqualToIgnoringNewLines("hi there");
+    }
+
+    @Test
+    void testCanMixQueryParametersAndPathSegments() throws URISyntaxException {
+
+        var uri = buildUri("location=foobar", "/status/500/body/hi+there");
+        var responseEntity = executeGet(uri);
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(responseEntity.getHeaders().getLocation()).hasToString("foobar");
+        assertThat(responseEntity.getBody()).isEqualToIgnoringNewLines("hi there");
+    }
 }
