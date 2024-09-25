@@ -17,10 +17,14 @@ function resolveVariable($name, $default) {
     return $_GET[$name] ?? $default;
 }
 
+$defaultResponseBody = '{ "hello": "world" }' . "\n";
+$requestBody = file_get_contents('php://input');
+$responseBody = $requestBody !== '' ? $requestBody : resolveVariable('body', $defaultResponseBody);
+
 $vars = array(
     'status' => resolveVariable('status', 200),
     'contenttype' => resolveVariable('contenttype', 'application/json'),
-    'body' => resolveVariable('body', '{ "hello": "world" }'),
+    'body' => $responseBody,
     'location' => resolveVariable('location', ''),
 );
 
@@ -35,8 +39,8 @@ if ($originalRequestPathSegments[0] === 'preload') {
 } else {
 
     if (file_exists($preloadFilename)) {
-        $filecontent = file_get_contents($preloadFilename);
-        $vars = json_decode($filecontent, true);
+        $preloadData = file_get_contents($preloadFilename);
+        $vars = json_decode($preloadData, true);
         unlink($preloadFilename);
     }
 
@@ -53,9 +57,7 @@ if ($originalRequestPathSegments[0] === 'preload') {
 
     http_response_code($vars['status']);
 
-    if ($vars['body']) {
-        print($vars['body'] . "\n");
-    }
+    print($vars['body']);
 }
 
 ?>

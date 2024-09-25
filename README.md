@@ -9,6 +9,12 @@ c0ffeepot is intended to be used in (unit/integration) tests. Never ever run
 it in production environments or other contexts where it will respond to
 user-supplied data.
 
+If you are at least a [1x engineer](https://1x.engineer/), you should
+definitely consider using a more flexible and better integrated framework
+such as [WireMock](https://wiremock.org/) or
+[Spring's MockRestServiceServer](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/test/web/client/MockRestServiceServer.html)
+instead, but c0ffeepot may be helpful in earlier development phases.
+
 c0ffeepot's regular habitat is a docker container running a php and apache.
 Feel free to use the default c0ffeepot docker hub repository:
 
@@ -25,7 +31,8 @@ docker rm c0ffeepot
 Usage
 =====
 
-c0ffeepot has three ways of injecting response attributes:
+c0ffeepot has the following ways of injecting response attributes:
+* Request body will be returned as response body
 * Query parameters
 * Path segments
 * Preloaded data
@@ -39,11 +46,19 @@ These are the available attributes:
 
 Query parameters and path segments can be mixed.
 
+The response body will be, in the following order
+* The request body (will even work for `GET` requests!)
+* The `body` path segment
+* The `body` query parameter
+* The default "hello world" json 
+
 Samples:
 ```shell
 $ curl -D - http://localhost:8080/status/200?body=hi+there
 $ curl -D - http://localhost:8080/status/302?location=http://example.com
-
+$ curl -D - -X POST -d 'foo' http://localhost:8080/status/401/sample/path
+$ curl -D - -d '{"preloadedbody": true}' http://localhost:8080/preload/status/200
+$ curl -D - http://localhost:8080/subsequent/request
 ```
 
 Preloading
