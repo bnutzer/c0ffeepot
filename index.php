@@ -44,11 +44,11 @@ if ($originalRequestPathSegments[0] === 'preload') {
         unlink($preloadFilename);
     }
 
-    if ($vars['location']) {
+    if (array_key_exists('location', $vars) && $vars['location']) {
         header('Location: ' . $vars['location']);
     }
 
-    if ($vars['contenttype'])  {
+    if (array_key_exists('contenttype', $vars) && $vars['contenttype'])  {
         header('Content-Type: ' . $vars['contenttype']);
     }
 
