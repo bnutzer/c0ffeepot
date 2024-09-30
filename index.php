@@ -5,28 +5,38 @@ $preloadFilename = sys_get_temp_dir() . DIRECTORY_SEPARATOR . "c0ffeepot.json";
 $originalRequestPath = $_GET['originalRequestPath'] ?? '(unknown)';
 $originalRequestPathSegments = explode("/", $originalRequestPath);
 
-function resolveVariable($name, $default) {
+function resolveVariable($name, &$vars) {
 
-    global $originalRequestPathSegments, $db;
+    global $originalRequestPathSegments;
 
     $varInRequestPath = array_search($name, $originalRequestPathSegments);
-    if ($varInRequestPath !== false && $varInRequestPath + 1 <= array_key_last($originalRequestPathSegments)) {
-        return $originalRequestPathSegments[$varInRequestPath + 1];
-    }
 
-    return $_GET[$name] ?? $default;
+    if ($varInRequestPath !== false && $varInRequestPath + 1 <= array_key_last($originalRequestPathSegments)) {
+        $vars[$name] = $originalRequestPathSegments[$varInRequestPath + 1];
+    } else if (array_key_exists($name, $_GET)) {
+        $vars[$name] = $_GET[$name];
+    }
+}
+
+function resolveParameters($defaultVars) {
+    $vars = $defaultVars;
+    foreach (array_keys($vars) as $key) {
+        resolveVariable($key, $vars);
+    }
+    return $vars;
 }
 
 $defaultResponseBody = '{ "hello": "world" }' . "\n";
 $requestBody = file_get_contents('php://input');
-$responseBody = $requestBody !== '' ? $requestBody : resolveVariable('body', $defaultResponseBody);
 
-$vars = array(
-    'status' => resolveVariable('status', 200),
-    'contenttype' => resolveVariable('contenttype', 'application/json'),
-    'body' => $responseBody,
-    'location' => resolveVariable('location', ''),
+$defaultVars = array(
+    'status' => 200,
+    'contenttype' => 'application/json',
+    'body' => $requestBody ?? $defaultResponseBody,
+    'location' => ''
 );
+
+$vars = resolveParameters($defaultVars);
 
 if ($originalRequestPathSegments[0] === 'preload') {
 
