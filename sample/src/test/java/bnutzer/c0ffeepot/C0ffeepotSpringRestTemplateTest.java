@@ -3,6 +3,7 @@ package bnutzer.c0ffeepot;
 import java.io.IOException;
 import java.net.URI;
 
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.ClientHttpResponse;
@@ -34,16 +35,21 @@ class C0ffeepotSpringRestTemplateTest extends C0ffeepotSpringResponseEntityTest 
 
     @Override
     ResponseEntity<String> executeGet(URI uri) {
-        return executeRequest(uri, HttpMethod.GET);
+        return executeRequest(uri, HttpMethod.GET, null);
     }
 
     @Override
     ResponseEntity<String> executePost(URI uri) {
-        return executeRequest(uri, HttpMethod.POST);
+        return executeRequest(uri, HttpMethod.POST, null);
     }
 
-    private ResponseEntity<String> executeRequest(URI uri, HttpMethod method) {
+    @Override
+    ResponseEntity<String> executePost(URI uri, String postBody) {
+        return executeRequest(uri, HttpMethod.POST, new HttpEntity<>(postBody));
+    }
 
-        return REST_TEMPLATE.exchange(uri, method, null, String.class);
+    private ResponseEntity<String> executeRequest(URI uri, HttpMethod method, HttpEntity<String> requestEntity) {
+
+        return REST_TEMPLATE.exchange(uri, method, requestEntity, String.class);
     }
 }

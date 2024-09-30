@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
@@ -12,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.shaded.com.fasterxml.jackson.core.type.TypeReference;
+import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 
 @Testcontainers
 abstract class C0ffeepotSpringResponseEntityTest {
@@ -35,6 +38,7 @@ abstract class C0ffeepotSpringResponseEntityTest {
 
     abstract ResponseEntity<String> executeGet(URI uri);
     abstract ResponseEntity<String> executePost(URI uri);
+    abstract ResponseEntity<String> executePost(URI uri, String postBody);
 
     @Test
     void testDefaultRequest() throws URISyntaxException {
@@ -124,5 +128,29 @@ abstract class C0ffeepotSpringResponseEntityTest {
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(responseEntity.getHeaders().getLocation()).hasToString("foobar");
         assertThat(responseEntity.getBody()).isEqualToIgnoringNewLines("hi there");
+    }
+
+    @Test
+    void testCanPreloadJsonBody() throws URISyntaxException {
+
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        String jsonWithUmlaut = "[{\"foo\":\"bar\"}]";
+
+        var uri = buildUri("", "/preload/status/200");
+        var responseEntity = executePost(uri, jsonWithUmlaut);
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
+
+        uri = buildUri("", "");
+        responseEntity = executeGet(uri);
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(responseEntity.getBody()).satisfies(
+            b -> {
+                assertThat(b).isNotEmpty();
+                List<Map<String, String>> response = objectMapper.readValue(b, new TypeReference<List<Map<String, String>>>() { });
+                assertThat(response).hasSize(1);
+                assertThat(response.getFirst()).containsEntry("foo", "bar");
+            }
+        );
     }
 }

@@ -31,6 +31,17 @@ class C0ffeepotSpringRestClientTest extends C0ffeepotSpringResponseEntityTest {
         return executeRequest(uri, POST_REQUEST);
     }
 
+    @Override
+    ResponseEntity<String> executePost(URI uri, String postBody) {
+
+        return REST_CLIENT
+                .post()
+                .uri(uri)
+                .body(postBody)
+                .retrieve()
+                .toEntity(String.class);
+    }
+
     private ResponseEntity<String> executeRequest(URI uri, RestClient.RequestHeadersUriSpec<?> request) {
 
         return request
