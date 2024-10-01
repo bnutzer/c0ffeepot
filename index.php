@@ -38,6 +38,25 @@ $defaultVars = array(
 
 $vars = resolveParameters($defaultVars);
 
+function sendResponseCode($vars) {
+    // The following response codes are not supported by PHP's http_response_code function
+    // and need to be handled manually
+    $unsupportedResponseCodes = array(
+        418,
+        419,
+        420,
+        425,
+        509,
+        511
+    );
+
+    if (in_array($vars['status'], $unsupportedResponseCodes)) {
+        header('HTTP/1.1 ' . $vars['status'] . ' Unsupported response code');
+    } else {
+        http_response_code($vars['status']);
+    }
+}
+
 if ($originalRequestPathSegments[0] === 'preload') {
 
     $file = fopen($preloadFilename, "w");
@@ -65,7 +84,7 @@ if ($originalRequestPathSegments[0] === 'preload') {
     header('X-Original-Request-Path: ' . $originalRequestPath);
     header('X-Request-Method: ' . $_SERVER['REQUEST_METHOD']);
 
-    http_response_code($vars['status']);
+    sendResponseCode($vars);
 
     print($vars['body']);
 }
