@@ -11,7 +11,9 @@ function resolveVariable($name, &$vars) {
 
     $varInRequestPath = array_search($name, $originalRequestPathSegments);
 
-    if ($varInRequestPath !== false && $varInRequestPath + 1 <= array_key_last($originalRequestPathSegments)) {
+    if ($varInRequestPath !== false
+        && $varInRequestPath + 1 <= array_key_last($originalRequestPathSegments)
+        && $originalRequestPathSegments[$varInRequestPath + 1]) {
         $vars[$name] = $originalRequestPathSegments[$varInRequestPath + 1];
     } else if (array_key_exists($name, $_GET)) {
         $vars[$name] = $_GET[$name];
