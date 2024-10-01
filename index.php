@@ -38,8 +38,6 @@ $defaultVars = array(
     'location' => ''
 );
 
-$vars = resolveParameters($defaultVars);
-
 function sendResponseCode($vars) {
     // The following response codes are not supported by PHP's http_response_code function
     // and need to be handled manually
@@ -58,6 +56,16 @@ function sendResponseCode($vars) {
         http_response_code($vars['status']);
     }
 }
+
+function validateVars($vars) {
+    if (!is_numeric($vars['status'])) {
+        http_response_code(400);
+        die('Invalid status code');
+    }
+}
+
+$vars = resolveParameters($defaultVars);
+validateVars($vars);
 
 if ($originalRequestPathSegments[0] === 'preload') {
 
