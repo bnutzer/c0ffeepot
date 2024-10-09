@@ -1,3 +1,6 @@
+2024-10-09
+==========
+* Allow persisting preloaded data until overwritten or reset
 
 2024-09-23
 ==========

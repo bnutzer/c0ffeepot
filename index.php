@@ -35,7 +35,8 @@ $defaultVars = array(
     'status' => 200,
     'contenttype' => 'application/json',
     'body' => $requestBody ?? $defaultResponseBody,
-    'location' => ''
+    'location' => '',
+    'persistent' => false
 );
 
 function sendResponseCode($vars) {
@@ -57,10 +58,19 @@ function sendResponseCode($vars) {
     }
 }
 
-function validateVars($vars) {
+function validateVars(&$vars) {
     if (!is_numeric($vars['status'])) {
         http_response_code(400);
         die('Invalid status code');
+    }
+    if ($vars['persistent'] === "true") {
+        $vars['persistent'] = true;
+    } elseif ($vars['persistent'] === "false") {
+        $vars['persistent'] = false;
+    }
+    if (!is_bool($vars['persistent'])) {
+        http_response_code(400);
+        die('Invalid persistent value ' . $vars['persistent']);
     }
 }
 
@@ -75,12 +85,19 @@ if ($originalRequestPathSegments[0] === 'preload') {
 
     http_response_code(202);
 
+} elseif ($originalRequestPathSegments[0] === 'reset') {
+
+    unlink($preloadFilename);
+    http_response_code(202);
+
 } else {
 
     if (file_exists($preloadFilename)) {
         $preloadData = file_get_contents($preloadFilename);
         $vars = json_decode($preloadData, true);
-        unlink($preloadFilename);
+        if ($vars['persistent'] !== true) {
+            unlink($preloadFilename);
+        }
     }
 
     if (array_key_exists('location', $vars) && $vars['location']) {

@@ -113,4 +113,27 @@ class C0ffeepotApacheHttpClientTest {
         var code = executeRequest(uri, HttpPost::new, HttpResponse::getCode);
         assertThat(code).isEqualTo(200);
     }
+
+    @Test
+    void testPersistence() throws URISyntaxException, IOException {
+
+        var uriPreload = buildUri("status=401&persistent=true", "/preload");
+        var uriSimple = buildUri("status=501");
+        var uriReset = buildUri("", "/reset");
+
+        var codePreload = executeRequest(uriPreload, HttpPost::new, HttpResponse::getCode);
+
+        var code1 = executeRequest(uriSimple, HttpGet::new, HttpResponse::getCode);
+        var code2 = executeRequest(uriSimple, HttpGet::new, HttpResponse::getCode);
+
+        var codeReset = executeRequest(uriReset, HttpPost::new, HttpResponse::getCode);
+
+        var code3 = executeRequest(uriSimple, HttpGet::new, HttpResponse::getCode);
+
+        assertThat(codePreload).as("Preload response").isEqualTo(202);
+        assertThat(code1).as("first request").isEqualTo(401);
+        assertThat(code2).as("second request").isEqualTo(401);
+        assertThat(codeReset).as("Reset response").isEqualTo(202);
+        assertThat(code3).as("third request").isEqualTo(501);
+    }
 }

@@ -64,8 +64,9 @@ $ curl -D - http://localhost:8080/subsequent/request
 Preloading
 ==========
 
-For testing of transitive requests, it can be helpful to first set up c0ffeepot to respond with certain
-properties, and then perform the transitive request. To do so, "preload" c0ffeepot with the properties
+For testing of transitive requests, it can be helpful to first set up
+c0ffeepot to respond with certain properties, and then perform the
+transitive request. To do so, "preload" c0ffeepot with the properties
 it should return in the next call:
 
 ```shell
@@ -74,8 +75,14 @@ $ curl -D - http://localhost:8080/api/whatever
 
 ```
 
-After preloading, the preloaded data will be returned in the next request, after which the data will
-be discarded.
+After preloading, the preloaded data will be returned in the next request,
+after which the data will be discarded. If you need multiple consecutive
+requests to return the preloaded data, you can use the argument
+`persistent=true` for the preload request. In this case, the same data will
+be returned until the next preload request, or until a request to `/reset`
+is performed.
+
+```shell
 
 Build your own image
 ====================
